@@ -3,6 +3,7 @@ require 'vendor/autoload.php';
 
 class validator{
     public $object;
+    public $object2;
     
     public function min($column, $min)
     {
@@ -312,7 +313,7 @@ class validator{
         return (object) array_filter($this->object[$column]);
     }
     
-    public function errors($column = '') {
+    public function errors($outColumn = '') {
         $filteredErrorsArray = [];
         
         foreach ($this->object as $key => $value) {
@@ -321,17 +322,34 @@ class validator{
             }
         }
         
-        if($column == ''){
-            return (object) $filteredErrorsArray;
-        }
-        
-        return $filteredErrorsArray[$column];
+        $this->object2 = $filteredErrorsArray;
+        return $outColumn == '' ? $this : $this->object2[$outColumn];
     }
     
-    public function first($column = '') {
-        // it should return the errors array and that we want to out first error from the array
-        return $this->errors($column);
-    }    
+    public function all() {
+        return $this->object2;
+    }
+    
+    public function first($outColumn) {
+        return isset($this->object2[$outColumn][0]) ? $this->object2[$outColumn][0] : null;
+    }
+    
+    
+    public function errors2($outColumn = '') {
+        $filteredErrorsArray = [];
+        
+        foreach ($this->object as $key => $value) {
+            foreach ($value as $columnKey => $message) {
+                if($message) $filteredErrorsArray[$key][] = $message;
+            }
+        }
+        
+        $this->object2 = $filteredErrorsArray;
+        return (object) [ 
+            '' => $this->object2[$outColumn],
+            'first()' => $this->object2[$outColumn][0]
+        ];
+    }
 }
 
 if($_SERVER['REQUEST_METHOD'] == 'POST'){    
@@ -411,9 +429,15 @@ if($_SERVER['REQUEST_METHOD'] == 'POST'){
     
     // dump($validate->errorsObject()); // get errors object
     // dump($validate->errorsObject('username')); // get errors object for specified input
-    dump($validate->errors()->username);
+    //dump($validate->errors()->username);
+    //dump($validate->errors()->first('username'));
+    
+    dump($validate->errors()->all());
+    dump($validate->errors('username'));
     dump($validate->errors()->first('username'));
-
+    
+    // ასე როგორ გავაკეთო ესაა საქმე
+    dump($validate->errors2('username'));//->first());
 }
 
 // array_key_first
